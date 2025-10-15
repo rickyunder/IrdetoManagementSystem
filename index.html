@@ -2044,9 +2044,8 @@ season : {
         formContainer.dataset.active = cat;
       }
     }
-
-  <script>
-async function downloadJSON() {
+    
+ function downloadJSON() {
   const cat = document.getElementById("formContainer").dataset.active || "movie";
   // const jsonData = sampleData[cat]; // full JSON object
   const jsonStr = JSON.stringify(jsonData, null, 2);
