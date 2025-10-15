@@ -9,6 +9,48 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhvend2dHNpdHJ6b3plamFkcGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNzU2MDgsImV4cCI6MjA3NTk1MTYwOH0.Wg6rp7o2Rwkt6Y8038X9-9KvoNMoQD_oKntg5MByczo';
 
   const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    async function downloadAndInsert(jsonData, filename = "data.json") {
+      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      try {
+          const { data, error } = await supabase
+              .from('Irdata')
+              .insert([{ payload: jsonData }])
+              .select();
+          if (error) throw error;
+          console.log("JSON inserted:", data);
+          alert("JSON saved to database!");
+      } catch (err) {
+          console.error("Error inserting JSON:", err.message);
+          alert("Failed to save JSON!");
+      }
+  }
+    
+  document.getElementById("downloadBtn").addEventListener("click", () => {
+      const generatedJson = {
+          metadata: { englishMetadata: { title: document.getElementById("titleInput").value } },
+          package_data: { 
+              packageId: document.getElementById("packageIdInput").value,
+              packageAssetId: document.getElementById("assetIdInput").value
+          },
+          hierarchyParents: { parentId: document.getElementById("parentIdInput").value },
+          publishData: {
+              publishAction: "PUBLISH",
+              publishDate: new Date().toISOString(),
+              user: document.getElementById("userInput").value || "admin_user",
+              platform: "web",
+              publishAuditId: "AUDIT-" + Math.floor(Math.random() * 10000)
+          }
+      };
+
+      downloadAndInsert(generatedJson, "mydata.json");
+  });
 </script>
 
   <link rel="icon" type="image/png" href="cat.png">
