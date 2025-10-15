@@ -2045,16 +2045,36 @@ season : {
       }
     }
 
-    function downloadJSON() {
-      const cat = document.getElementById("formContainer").dataset.active || "movie";
-      const jsonStr = JSON.stringify(sampleData[cat], null, 2);
-      const blob = new Blob([jsonStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${cat}_vod_asset.json`;
-      a.click();
-    }
+  <script>
+async function downloadJSON() {
+  const cat = document.getElementById("formContainer").dataset.active || "movie";
+  const jsonData = sampleData[cat]; // full JSON object
+  const jsonStr = JSON.stringify(jsonData, null, 2);
+
+ 
+  const blob = new Blob([jsonStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${cat}_vod_asset.json`;
+  a.click();
+
+  try {
+    const { data, error } = await supabase
+      .from('Irdata')
+      .insert([{ payload: jsonData }])  
+      .select();
+
+    if (error) throw error;
+
+    console.log("Full JSON inserted into Supabase:", data);
+    alert("✅ JSON saved to Supabase database!");
+  } catch (err) {
+    console.error("❌ Supabase insertion error:", err.message);
+    alert("Failed to save JSON to database!");
+  }
+}
+</script>
   </script>
 </body>
 </html>
