@@ -2059,20 +2059,7 @@ async function downloadJSON() {
   a.download = `${cat}_vod_asset.json`;
   a.click();
 
-  try {
-    const { data, error } = await supabase
-      .from('Irdata')
-      .insert([{ payload: jsonData }])  
-      .select();
-
-    if (error) throw error;
-
-    console.log("Full JSON inserted into Supabase:", data);
-    alert("✅ JSON saved to Supabase database!");
-  } catch (err) {
-    console.error("❌ Supabase insertion error:", err.message);
-    alert("Failed to save JSON to database!");
-  }
+  downloadAndInsert(jsonData, `${cat}_vod_asset.json`);
 }
 </script>
   </script>
