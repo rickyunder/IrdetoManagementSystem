@@ -98,14 +98,24 @@
     .welcome p {
       color: #333; font-size: 18px;
     }
-  </style>
+    </style>
+    <!-- Supabase JS client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
   <header>
     VOD JSON Generator
     <img src="usage-of-logo-480x228.png" alt="IRDETO Logo">
   </header>
-  <div class="main">
+    <div class="main">
+        <div style="padding: 16px; background: #eae6f7; border-bottom: 1px solid #d1cbe1;">
+            <form id="searchForm" style="display: flex; gap: 8px; align-items: center;">
+                <label for="packetidInput" style="font-size:13px;">Search by PacketID:</label>
+                <input id="packetidInput" type="text" placeholder="Enter PacketID" style="font-size:13px; padding:4px; border-radius:4px; border:1px solid #ccc;">
+                <button type="submit" class="small">Search</button>
+            </form>
+            <div id="searchResult" style="margin-top:10px; font-size:13px;"></div>
+        </div>
     <div class="sidebar">
       <ul>
         <li onclick="loadCategory('movie')">Movies</li>
@@ -124,7 +134,11 @@
     </div>
   </div>
 
-  <script>
+    <script>
+        // Supabase config
+        const SUPABASE_URL = 'https://hozwvtsitrzozejaapdv.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhvend2dHNpdHJ6b3plamFhcGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNzU2MDgsImV4cCI6MjA3NTk1MTYwOH0.Wg6rp7o2Rwkt6Y8038X9-9KvoNMoQD_oKntg5MByczo';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const sampleData = {
  movie: {
     "hits": "1",
@@ -2040,17 +2054,66 @@ season : {
                     }
     }
 
-    function downloadJSON() {
-      const cat = document.getElementById("formContainer").dataset.active || "movie";
-      const jsonStr = JSON.stringify(sampleData[cat], null, 2);
-      const blob = new Blob([jsonStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${cat}_vod_asset.json`;
-      a.click();
-    }
+        async function downloadJSON() {
+            const cat = document.getElementById("formContainer").dataset.active || "movie";
+            const data = sampleData[cat];
+            const jsonStr = JSON.stringify(data, null, 2);
+            // Store in Supabase
+            try {
+                const { error } = await supabase.from('irdata').insert([
+                    { payload: data }
+                ]);
+                if (error) {
+                    alert('Error saving to Supabase: ' + error.message);
+                } else {
+                    // Download as before
+                    const blob = new Blob([jsonStr], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${cat}_vod_asset.json`;
+                    a.click();
+                }
+            } catch (e) {
+                alert('Unexpected error: ' + e.message);
+            }
+        }
+
+        // Search by PacketID
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchForm = document.getElementById('searchForm');
+            const packetidInput = document.getElementById('packetidInput');
+            const searchResult = document.getElementById('searchResult');
+            if (searchForm) {
+                searchForm.onsubmit = async function(e) {
+                    e.preventDefault();
+                    const packetid = packetidInput.value.trim();
+                    if (!packetid) {
+                        searchResult.textContent = 'Please enter a PacketID.';
+                        return;
+                    }
+                    searchResult.textContent = 'Searching...';
+                    // Query Supabase by package_id
+                    const { data, error } = await supabase
+                        .from('irdata')
+                        .select('payload')
+                        .eq('package_id', packetid)
+                        .limit(1);
+                    if (error) {
+                        searchResult.textContent = 'Error: ' + error.message;
+                    } else if (data && data.length > 0) {
+                        searchResult.textContent = '';
+                        const pre = document.createElement('pre');
+                        pre.style.maxWidth = '100%';
+                        pre.style.overflowX = 'auto';
+                        pre.textContent = JSON.stringify(data[0].payload, null, 2);
+                        searchResult.appendChild(pre);
+                    } else {
+                        searchResult.textContent = 'No data found for this PacketID.';
+                    }
+                };
+            }
+        });
   </script>
 </body>
 </html>
-
