@@ -3,102 +3,243 @@
 <head>
   <meta charset="UTF-8">
   <title>VOD JSON Generator</title>
-  <style>
+   <style>
+    :root {
+      --primary: #6a4bc3;
+      --primary-light: #ece7ff;
+      --primary-dark: #4b2ba1;
+      --text-dark: #222;
+      --text-light: #555;
+      --border: #e4e4e7;
+      --bg-light: #fafafa;
+      --radius: 10px;
+      --shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #5c2d91;
-      color: #fff;
+      font-family: "Inter", "Poppins", Arial, sans-serif;
+      background: var(--bg-light);
+      color: var(--text-dark);
       display: flex;
       flex-direction: column;
       height: 100vh;
-    } 
+    }
+
+    /* -------- HEADER -------- */
     header {
-      background: #4b1d7a;
-      padding: 15px 20px;
-      font-size: 22px;
-      font-weight: bold;
+      background: #fff;
+      padding: 12px 20px;
+      font-size: 20px;
+      font-weight: 600;
       display: flex;
       justify-content: space-between;
-      align-items: center; 
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      color: var(--text-dark);
     }
-    header img { height: 40px; }
-    .main { flex: 1; display: flex; overflow: hidden; }
+
+    header img {
+      height: 45px;
+    }
+
+    /* -------- MAIN LAYOUT -------- */
+    .main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* -------- SIDEBAR -------- */
     .sidebar {
-      width: 220px; background: #3b1760;
-      display: flex; flex-direction: column; justify-content: space-between;
+      width: 240px;
+      background: #fff;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      font-size: 15px;
+      padding-top: 10px;
     }
-    .sidebar ul { list-style: none; padding: 0; margin: 0; }
+
+    .sidebar ul { 
+      list-style: none; 
+      padding: 0; 
+      margin: 0; 
+    }
+
     .sidebar li {
-      padding: 15px; cursor: pointer; border-bottom: 1px solid #4b1d7a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      cursor: pointer;
+      color: var(--text-dark);
+      transition: 0.2s;
+      font-weight: 500;
     }
-    .sidebar li:hover { background: #5c2d91; }
+
+    .sidebar li:hover {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    /* Expand/collapse section button */
+    .sidebar li .arrow {
+      margin-left: auto;
+      opacity: 0.6;
+    }
+
     .sidebar button {
-      margin: 15px; padding: 12px; background: #7a3dcf;
-      border: none; border-radius: 5px; color: #fff; cursor: pointer; font-size: 14px;
+      margin: 15px;
+      padding: 12px;
+      background: var(--primary);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.2s;
     }
-    .sidebar button:hover { background: #9b60f2; }
-        .content { flex: 1; background: #f4f6f9; color: #000; padding: 20px; overflow-y: auto; }
-        .card {
-            background: white; border-radius: 8px; padding: 10px; margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-            font-size: 13px;
-        }
-        h3 {
-            margin: 6px 0; cursor: pointer; background: #eee;
-            padding: 6px; border-radius: 5px;
-            font-size: 14px;
-        }
-        label { display: block; margin-top: 4px; font-weight: bold; font-size: 12px; }
-        input, select, textarea {
-            width: 100%; padding: 4px; margin-top: 2px;
-            border: 1px solid #ccc; border-radius: 5px;
-            font-size: 13px;
-        }
-        button.small {
-            background: #0078d7; color: white; border: none;
-            padding: 4px 8px; margin-top: 4px; border-radius: 5px; cursor: pointer; font-size: 12px;
-        }
-        button.small:hover { background: #005a9e; }
-            /* Top-level fields as horizontal columns */
-            .top-fields-row {
-                display: flex;
-                flex-direction: row;
-                gap: 12px;
-                margin-bottom: 16px;
-                flex-wrap: wrap;
-            }
-            .card.top-level {
-                min-width: 120px;
-                margin-bottom: 0;
-                padding: 8px 10px;
-                font-size: 15px;
-                font-weight: 600;
-                color: #4b1d7a;
-                cursor: pointer;
-                background: #f7f3fa;
-                border: 1px solid #e0d6f7;
-                transition: background 0.2s, box-shadow 0.2s;
-                text-align: center;
-                flex: 0 0 auto;
-            }
-            .card.top-level:hover, .card.top-level.active {
-                background: #e6e0f3;
-                box-shadow: 0 4px 12px rgba(92,45,145,0.10);
-            }
+
+    .sidebar button:hover {
+      background: var(--primary-dark);
+    }
+
+    /* -------- CONTENT AREA -------- */
+    .content {
+  flex: 1;
+  background: var(--bg-light);
+  padding: 24px;
+  overflow-y: auto;
+
+  /* ✅ New additions */
+  border-left: 10px solid #e8e1ff;     /* Light purple edge */
+  border-top: 10px solid #e8e1ff;      /* Touch header */
+  border-right: 10px solid #e8e1ff;    /* Symmetry */
+  border-radius: 12px 12px 0 0;       /* Slight round only on top */
+}
+
+
+    /* -------- CARD -------- */
+    .card {
+      background: white; 
+      border-radius: var(--radius); 
+      padding: 14px; 
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    /* FIELD HEADERS */
+    h3 {
+      margin: 0 0 10px;
+      cursor: pointer;
+      background: var(--primary-light);
+      padding: 8px;
+      border-radius: var(--radius);
+      font-size: 15px;
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+
+    label { 
+      display: block; 
+      margin-top: 6px; 
+      font-weight: 600; 
+      font-size: 13px; 
+      color: var(--text-dark);
+    }
+
+    input, select, textarea {
+      width: 100%; 
+      padding: 6px; 
+      margin-top: 4px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      color: var(--text-dark);
+      background: #fff;
+      transition: border 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    button.small {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      margin-top: 6px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.2s;
+    }
+
+    button.small:hover {
+      background: var(--primary-dark);
+    }
+
+    /* -------- TOP LEVEL FIELDS -------- */
+    .top-fields-row {
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .card.top-level {
+      min-width: 120px;
+      margin-bottom: 0;
+      padding: 10px 12px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--primary-dark);
+      cursor: pointer;
+      background: var(--primary-light);
+      border: 1px solid #dcd7fc;
+      transition: 0.2s;
+      text-align: center;
+      flex: 0 0 auto;
+    }
+
+    .card.top-level:hover,
+    .card.top-level.active {
+      background: #ddd6fe;
+      box-shadow: var(--shadow);
+      border-color: var(--primary);
+    }
+
+    /* -------- WELCOME -------- */
     .welcome {
-      text-align: center; padding: 50px;
+      text-align: center; 
+      padding: 70px;
+      color: var(--text-dark);
     }
+
     .welcome img {
-      max-width: 200px; margin-bottom: 20px;
+      max-width: 340px; 
+      margin-bottom: 2px;
     }
+
     .welcome h1 {
-      color: #5c2d91; font-size: 28px; margin-bottom: 10px;
+      color: var(--primary-dark); 
+      font-size: 28px;
+      margin-bottom: 12px;
+      font-weight: 600;
     }
+
     .welcome p {
-      color: #333; font-size: 18px;
+      color: var(--text-light); 
+      font-size: 18px;
     }
-    </style>
+</style>
     <!-- Supabase JS client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
