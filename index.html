@@ -26,7 +26,6 @@
       height: 100vh;
     }
 
-    /* -------- HEADER -------- */
     header {
       background: #fff;
       padding: 12px 20px;
@@ -44,14 +43,13 @@
       height: 45px;
     }
 
-    /* -------- MAIN LAYOUT -------- */
+
     .main {
       flex: 1;
       display: flex;
       overflow: hidden;
     }
 
-    /* -------- SIDEBAR -------- */
     .sidebar {
       width: 240px;
       background: #fff;
@@ -84,7 +82,7 @@
       color: var(--primary-dark);
     }
 
-    /* Expand/collapse section button */
+    
     .sidebar li .arrow {
       margin-left: auto;
       opacity: 0.6;
@@ -106,14 +104,14 @@
       background: var(--primary-dark);
     }
 
-    /* -------- CONTENT AREA -------- */
+   
     .content {
   flex: 1;
   background: var(--bg-light);
   padding: 24px;
   overflow-y: auto;
 
-  /* ✅ New additions */
+ 
   border-left: 10px solid #e8e1ff;     /* Light purple edge */
   border-top: 10px solid #e8e1ff;      /* Touch header */
   border-right: 10px solid #e8e1ff;    /* Symmetry */
@@ -121,7 +119,7 @@
 }
 
 
-    /* -------- CARD -------- */
+    
     .card {
       background: white; 
       border-radius: var(--radius); 
@@ -132,7 +130,7 @@
       font-size: 14px;
     }
 
-    /* FIELD HEADERS */
+    
     h3 {
       margin: 0 0 10px;
       cursor: pointer;
@@ -185,7 +183,7 @@
       background: var(--primary-dark);
     }
 
-    /* -------- TOP LEVEL FIELDS -------- */
+   
     .top-fields-row {
       display: flex;
       flex-direction: row;
@@ -216,7 +214,7 @@
       border-color: var(--primary);
     }
 
-    /* -------- WELCOME -------- */
+    
     .welcome {
       text-align: center; 
       padding: 70px;
@@ -240,7 +238,7 @@
       font-size: 18px;
     }
 </style>
-    <!-- Supabase JS client -->
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -270,7 +268,7 @@
   </div>
 
     <script>
-        // Supabase config
+        
         const SUPABASE_URL = 'https://hozwvtsitrzozejaapdv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhvend2dHNpdHJ6b3plamFhcGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNzU2MDgsImV4cCI6MjA3NTk1MTYwOH0.Wg6rp7o2Rwkt6Y8038X9-9KvoNMoQD_oKntg5MByczo';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -2927,7 +2925,7 @@ series: {
 
 function buildForm(obj, container, parentKey = "", isRoot = false) {
 
-  container.innerHTML = "";   // ✅ Clear only this section (NOT whole form)
+  container.innerHTML = "";   
 
   if (Array.isArray(obj)) {
     obj.forEach((item, idx) => {
@@ -2960,7 +2958,7 @@ function buildForm(obj, container, parentKey = "", isRoot = false) {
       wrapper.appendChild(title);
       wrapper.appendChild(content);
 
-      /* ✅ Remove only THIS item, re-render only THIS array block */
+      
       if (!isRoot) {
         const removeBtn = document.createElement("button");
         removeBtn.textContent = "Remove";
@@ -2975,7 +2973,7 @@ function buildForm(obj, container, parentKey = "", isRoot = false) {
       container.appendChild(wrapper);
     });
 
-    /* ✅ Add new element */
+    /*  Add new element */
     const addBtn = document.createElement("button");
     addBtn.textContent = `Add ${parentKey ? parentKey : "Item"}`;
     addBtn.className = "small";
@@ -3031,7 +3029,7 @@ function buildForm(obj, container, parentKey = "", isRoot = false) {
 }
 
 
-/* ✅ Load category only ONCE — no refresh on add/remove */
+
 function loadCategory(cat) {
   const formContainer = document.getElementById("formContainer");
   formContainer.innerHTML = "";
@@ -3051,7 +3049,6 @@ function loadCategory(cat) {
 
     topCard.onclick = () => {
 
-      /* ✅ Clear previous opened details only */
       Array.from(formContainer.querySelectorAll('.detail-card')).forEach(e => e.remove());
       Array.from(formContainer.querySelectorAll('.card.top-level')).forEach(e => e.classList.remove('active'));
 
@@ -3071,7 +3068,6 @@ function loadCategory(cat) {
 }
 
 
-/* ✅ JSON + DB store + download */
 async function downloadJSON() {
   const cat = document.getElementById("formContainer").dataset.active || "movie";
   const data = sampleData[cat];
