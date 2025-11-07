@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>VOD JSON Generator</title>
+  <title>Irdeto Management System</title>
    <style>
     :root {
       --primary: #6a4bc3;
@@ -245,7 +245,7 @@
 </head>
 <body>
   <header>
-    VOD JSON Generator
+    Irdeto Management System
     <img src="logo.9b855fd95b676e72.svg" alt="IRDETO Logo">
   </header>
     <div class="main">
@@ -2081,7 +2081,7 @@ series: {
                     "prelogin": false,
                     "castingLabel": [],
                     "sfvAccountLabel": [],
-                    "thirdPartyLabel": "[]",
+                    "thirdPartyLabel": "",
                     "downloadToGoivpAdiProviderId": "",
                     "download2Go": false,
                     "sellingPeriodEnd": "2026-12-30 23:59:59",
@@ -2522,7 +2522,7 @@ series: {
                     "prelogin": false,
                     "castingLabel": [],
                     "sfvAccountLabel": [],
-                    "thirdPartyLabel": "[]",
+                    "thirdPartyLabel": "",
                     "downloadToGoivpAdiProviderId": "astro.2d",
                     "download2Go": true,
                     "sellingPeriodEnd": null,
@@ -2896,178 +2896,208 @@ series: {
 }
     };
 
-    function makeInputForType(value, onChange) {
-      let input;
-      if (typeof value === "number") {
-        input = document.createElement("input");
-        input.type = "number"; input.value = value;
-        input.oninput = e => onChange(Number(e.target.value));
-      } else if (typeof value === "boolean") {
-        input = document.createElement("select");
-        ["true","false"].forEach(opt => {
-          const option = document.createElement("option");
-          option.value = opt; option.textContent = opt;
-          if (String(value) === opt) option.selected = true;
-          input.appendChild(option);
-        });
-        input.onchange = e => onChange(e.target.value === "true");
+  function makeInputForType(value, onChange) {
+  let input;
+
+  if (typeof value === "number") {
+    input = document.createElement("input");
+    input.type = "number";
+    input.value = value;
+    input.oninput = e => onChange(Number(e.target.value));
+
+  } else if (typeof value === "boolean") {
+    input = document.createElement("select");
+    ["true", "false"].forEach(opt => {
+      const option = document.createElement("option");
+      option.value = opt;
+      option.textContent = opt;
+      if (String(value) === opt) option.selected = true;
+      input.appendChild(option);
+    });
+    input.onchange = e => onChange(e.target.value === "true");
+
+  } else {
+    input = document.createElement("input");
+    input.type = "text";
+    input.value = value ?? "";
+    input.oninput = e => onChange(e.target.value);
+  }
+  return input;
+}
+
+function buildForm(obj, container, parentKey = "", isRoot = false) {
+
+  container.innerHTML = "";   // ✅ Clear only this section (NOT whole form)
+
+  if (Array.isArray(obj)) {
+    obj.forEach((item, idx) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "card";
+
+      const prettyName = parentKey
+        ? parentKey.charAt(0).toUpperCase() + parentKey.slice(1) + " Item " + (idx + 1)
+        : "Item " + (idx + 1);
+
+      const title = document.createElement("h3");
+      title.textContent = prettyName;
+
+      const content = document.createElement("div");
+      content.className = "content";
+      content.style.display = "block";
+
+      title.onclick = () =>
+        content.style.display = content.style.display === "none" ? "block" : "none";
+
+      if (typeof item === "object" && item !== null) {
+        buildForm(item, content, parentKey, false);
       } else {
-        input = document.createElement("input");
-        input.type = "text"; input.value = value ?? "";
-        input.oninput = e => onChange(e.target.value);
+        const input = makeInputForType(item, val => {
+          obj[idx] = val;
+        });
+        content.appendChild(input);
       }
-      return input;
-    }
 
-    function buildForm(obj, container, parentKey="", isRoot=false) {
-      if (Array.isArray(obj)) {
-                obj.forEach((item, idx) => {
-                    const wrapper = document.createElement("div");
-                    wrapper.className = "card";
+      wrapper.appendChild(title);
+      wrapper.appendChild(content);
 
-                    const prettyName = parentKey
-                        ? parentKey.charAt(0).toUpperCase() + parentKey.slice(1) + " Item " + (idx+1)
-                        : "Item " + (idx+1);
-
-                    const title = document.createElement("h3");
-                    title.textContent = prettyName;
-
-                    const content = document.createElement("div");
-                    content.className = "content";
-                                            // Expand first level of array by default for offers, offerRow, keywords, and directors
-                                            if (isRoot || ["offers", "offerRow", "keywords", "directors"].includes(parentKey)) {
-                                                content.style.display = "block";
-                                            } else {
-                                                content.style.display = "none";
-                                            }
-                    title.onclick = () =>
-                        content.style.display = content.style.display === "none" ? "block" : "none";
-
-                    if (typeof item === "object" && item !== null) {
-                        buildForm(item, content, parentKey);
-                    } else {
-                        const input = makeInputForType(item, val => obj[idx] = val);
-                        content.appendChild(input);
-                    }
-
-                    wrapper.appendChild(title);
-                    wrapper.appendChild(content);
-
-                    // Remove button only for non-root arrays
-                    if (!isRoot) {
-                        const removeBtn = document.createElement("button");
-                        removeBtn.textContent = "Remove";
-                        removeBtn.className = "small";
-                        removeBtn.onclick = () => {
-                            obj.splice(idx, 1);
-                            loadCategory(container.dataset.cat);
-                        };
-                        wrapper.appendChild(removeBtn);
-                    }
-
-                    container.appendChild(wrapper);
-                });
-
-        // Add button only for non-root arrays
-        if (!isRoot) {
-          const addBtn = document.createElement("button");
-          addBtn.textContent = `Add ${parentKey ? parentKey : "Item"}`;
-          addBtn.className = "small";
-          addBtn.onclick = () => {
-            let newVal = "";
-            if (typeof obj[0] === "number") newVal = 0;
-            else if (typeof obj[0] === "boolean") newVal = false;
-            else if (typeof obj[0] === "object") newVal = {};
-            obj.push(newVal);
-            loadCategory(container.dataset.cat);
-          };
-          container.appendChild(addBtn);
-        }
-
-      } else if (typeof obj === "object" && obj !== null) {
-        for (let key in obj) {
-          const value = obj[key];
-          const wrapper = document.createElement("div");
-          if (typeof value === "object" && value !== null) {
-            const title = document.createElement("h3");
-            title.textContent = key;
-            const content = document.createElement("div");
-            content.className = "content";
-            content.style.display = "none";
-            title.onclick = () =>
-              content.style.display = content.style.display === "none" ? "block" : "none";
-            buildForm(value, content, key, false);
-            wrapper.appendChild(title);
-            wrapper.appendChild(content);
-          } else {
-            const label = document.createElement("label");
-            label.textContent = key;
-            const input = makeInputForType(value, val => obj[key] = val);
-            wrapper.appendChild(label);
-            wrapper.appendChild(input);
-          }
-          container.appendChild(wrapper);
-        }
+      /* ✅ Remove only THIS item, re-render only THIS array block */
+      if (!isRoot) {
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "Remove";
+        removeBtn.className = "small";
+        removeBtn.onclick = () => {
+          obj.splice(idx, 1);
+          buildForm(obj, container, parentKey, isRoot);
+        };
+        wrapper.appendChild(removeBtn);
       }
+
+      container.appendChild(wrapper);
+    });
+
+    /* ✅ Add new element */
+    const addBtn = document.createElement("button");
+    addBtn.textContent = `Add ${parentKey ? parentKey : "Item"}`;
+    addBtn.className = "small";
+    addBtn.onclick = () => {
+      let newVal = "";
+
+      if (typeof obj[0] === "number") newVal = 0;
+      else if (typeof obj[0] === "boolean") newVal = false;
+      else if (typeof obj[0] === "object") newVal = structuredClone(obj[0] ?? {});
+      
+      obj.push(newVal);
+
+      buildForm(obj, container, parentKey, isRoot);
+    };
+    container.appendChild(addBtn);
+
+  } else if (typeof obj === "object" && obj !== null) {
+
+    for (let key in obj) {
+      const value = obj[key];
+      const wrapper = document.createElement("div");
+
+      if (typeof value === "object" && value !== null) {
+        const title = document.createElement("h3");
+        title.textContent = key;
+
+        const content = document.createElement("div");
+        content.className = "content";
+        content.style.display = "none";
+
+        title.onclick = () =>
+          content.style.display = content.style.display === "none" ? "block" : "none";
+
+        buildForm(value, content, key, false);
+
+        wrapper.appendChild(title);
+        wrapper.appendChild(content);
+
+      } else {
+        const label = document.createElement("label");
+        label.textContent = key;
+
+        const input = makeInputForType(value, val => {
+          obj[key] = val;
+        });
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+      }
+      container.appendChild(wrapper);
+    }
+  }
+}
+
+
+/* ✅ Load category only ONCE — no refresh on add/remove */
+function loadCategory(cat) {
+  const formContainer = document.getElementById("formContainer");
+  formContainer.innerHTML = "";
+  formContainer.dataset.active = cat;
+
+  if (!sampleData[cat]) return;
+
+  const dataObj = sampleData[cat].data[0];
+
+  const topFieldsRow = document.createElement("div");
+  topFieldsRow.className = "top-fields-row";
+
+  Object.keys(dataObj).forEach(key => {
+    const topCard = document.createElement("div");
+    topCard.className = "card top-level";
+    topCard.textContent = key;
+
+    topCard.onclick = () => {
+
+      /* ✅ Clear previous opened details only */
+      Array.from(formContainer.querySelectorAll('.detail-card')).forEach(e => e.remove());
+      Array.from(formContainer.querySelectorAll('.card.top-level')).forEach(e => e.classList.remove('active'));
+
+      topCard.classList.add('active');
+
+      const detailCard = document.createElement("div");
+      detailCard.className = "card detail-card";
+
+      buildForm(dataObj[key], detailCard, key, true);
+      formContainer.appendChild(detailCard);
+    };
+
+    topFieldsRow.appendChild(topCard);
+  });
+
+  formContainer.appendChild(topFieldsRow);
+}
+
+
+/* ✅ JSON + DB store + download */
+async function downloadJSON() {
+  const cat = document.getElementById("formContainer").dataset.active || "movie";
+  const data = sampleData[cat];
+  const jsonStr = JSON.stringify(data, null, 2);
+
+  try {
+    const { error } = await supabase.from('irdata').insert([
+      { payload: data }
+    ]);
+
+    if (!error) {
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${cat}_vod_asset.json`;
+      a.click();
+    } else {
+      alert("Error saving to Supabase: " + error.message);
     }
 
-    function loadCategory(cat) {
-      const formContainer = document.getElementById("formContainer");
-      formContainer.innerHTML = "";
-                    if (sampleData[cat]) {
-                        // Render each top-level field as a horizontal column (side-by-side)
-                        const dataObj = sampleData[cat].data[0];
-                        const topFieldsRow = document.createElement("div");
-                        topFieldsRow.className = "top-fields-row";
-                        Object.keys(dataObj).forEach(key => {
-                            const topCard = document.createElement("div");
-                            topCard.className = "card top-level";
-                            topCard.textContent = key;
-                            topCard.onclick = () => {
-                                // Remove all expanded details
-                                Array.from(formContainer.querySelectorAll('.card:not(.top-level)')).forEach(e => e.remove());
-                                // Remove active from all top-level
-                                Array.from(formContainer.querySelectorAll('.card.top-level')).forEach(e => e.classList.remove('active'));
-                                topCard.classList.add('active');
-                                // Show the details for this field
-                                const detailCard = document.createElement("div");
-                                detailCard.className = "card";
-                                buildForm({[key]: dataObj[key]}, detailCard, key, true);
-                                formContainer.appendChild(detailCard);
-                            };
-                            topFieldsRow.appendChild(topCard);
-                        });
-                        formContainer.appendChild(topFieldsRow);
-                        formContainer.dataset.active = cat;
-                    }
-    }
-
-        async function downloadJSON() {
-            const cat = document.getElementById("formContainer").dataset.active || "movie";
-            const data = sampleData[cat];
-            const jsonStr = JSON.stringify(data, null, 2);
-            // Store in Supabase
-            try {
-                const { error } = await supabase.from('irdata').insert([
-                    { payload: data }
-                ]);
-                if (error) {
-                    alert('Error saving to Supabase: ' + error.message);
-                } else {
-                    // Download as before
-                    const blob = new Blob([jsonStr], { type: "application/json" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `${cat}_vod_asset.json`;
-                    a.click();
-                }
-            } catch (e) {
-                alert('Unexpected error: ' + e.message);
-            }
-        }
-
-        
+  } catch (e) {
+    alert("Unexpected error: " + e.message);
+  }
+}
+  
   </script>
 </body>
 </html>
