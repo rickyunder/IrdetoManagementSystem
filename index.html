@@ -3154,11 +3154,15 @@ trailers: {
   const endEl = document.getElementById("periodEnd");
   const channelEl = document.getElementById("channelId");
 
-  if (!channelEl.value) {
-    return alert("Please enter a Channel ID.");
-  }
+const channelIdValue = channelEl.value.trim();
+if (!channelIdValue) {
+  return alert("Please enter a Channel ID.");
+}
 
-  const channelId = Number(channelEl.value);
+const channelId = Number(channelIdValue);
+if (isNaN(channelId) || channelId <= 0) {
+  return alert("Please enter a valid Channel ID.");
+}
 
   let startDate, endDate;
 
