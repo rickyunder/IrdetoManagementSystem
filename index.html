@@ -3150,39 +3150,15 @@ trailers: {
     }
     
    async function fetchEPG() {
-  const startEl = document.getElementById("periodStart");
-  const endEl = document.getElementById("periodEnd");
-  const channelEl = document.getElementById("channelId");
+  const channelId = Number(document.getElementById("channelId").value);
+  const periodStart = new Date(document.getElementById("periodStart").value).toISOString();
+  const periodEnd = new Date(document.getElementById("periodEnd").value).toISOString();
 
-  const channelIdValue = channelEl.value.trim();
-  if (!channelIdValue) return alert("Please enter a Channel ID.");
-
-  const channelId = Number(channelIdValue);
-  if (isNaN(channelId) || channelId <= 0) return alert("Please enter a valid Channel ID.");
-
-  let startDate, endDate;
-
-  if (startEl.value && endEl.value) {
-    startDate = new Date(startEl.value);
-    endDate = new Date(endEl.value);
-  } else {
-    const malaysiaNow = new Date();
-    malaysiaNow.setHours(6, 0, 0, 0);
-    startDate = malaysiaNow;
-
-    const tomorrow = new Date(malaysiaNow);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(5, 59, 59, 0);
-    endDate = tomorrow;
-
-    startEl.value = startDate.toISOString().slice(0, 16);
-    endEl.value = endDate.toISOString().slice(0, 16);
-  }
-
-  const bodyData = {
-    channelId,
-    periodStart: startDate.toISOString(),
-    periodEnd: endDate.toISOString()
+  const body = {
+    channelId: [channelId],
+    periodStart,
+    periodEnd,
+    platform: ["PayTV"]
   };
 
   try {
@@ -3191,22 +3167,18 @@ trailers: {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyData)
+        body: JSON.stringify(body)
       }
     );
 
-    if (!response.ok) {
-      const text = await response.text();
-      return alert("EPG fetch failed: " + text);
-    }
-
     const data = await response.json();
+
     console.log("EPG Response:", data);
 
-    // Save into Supabase table
+    // Save to Supabase
     await supabase.from("irdata").insert([{ payload: data }]);
 
-    // Auto-download JSON file
+    // Auto-download JSON
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -3216,8 +3188,9 @@ trailers: {
 
     alert("EPG Retrieved Successfully!");
   } catch (err) {
-    alert("Error fetching EPG: " + err.message);
+    alert("Error: " + err.message);
   }
-}    </script>
+}
+  </script>
     </body>
     </html>
