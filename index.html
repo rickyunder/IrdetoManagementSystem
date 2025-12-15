@@ -3034,7 +3034,11 @@ series: {
 
 function buildForm(obj, container, parentKey = "", isRoot = false) {
 
-  container.innerHTML = "";   
+  // ✅ Clear ONLY at root level
+  if (isRoot) {
+    container.innerHTML = "";
+  }
+ 
 
   if (Array.isArray(obj)) {
     obj.forEach((item, idx) => {
