@@ -3074,7 +3074,7 @@ async function downloadJSON() {
   const jsonStr = JSON.stringify(data, null, 2);
 
   try {
-    const { error } = await supabase.from('irdata').insert([
+    const { error } = await supabase.from('newirdata').insert([
       { payload: data }
     ]);
 
