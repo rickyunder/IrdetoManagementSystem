@@ -256,6 +256,21 @@
                 <li onclick="loadCategory('boxset')">Boxset</li>
                 <li onclick="loadCategory('trailers')">Trailers</li>
             </ul>
+
+            <input
+  type="text"
+  id="searchPackageId"
+  placeholder="Enter Package ID"
+  style="margin:10px; padding:8px; border-radius:6px; border:1px solid #ccc"
+/>
+
+<button
+  style="margin:10px"
+  onclick="searchByPackageId()"
+>
+  Search & Edit
+</button>
+
       <button onclick="downloadJSON()">Download JSON</button>
     </div>
     <div class="content" id="formContainer">
@@ -272,6 +287,83 @@
         const SUPABASE_URL = 'https://hozwvtsitrzozejaapdv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhvend2dHNpdHJ6b3plamFhcGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNzU2MDgsImV4cCI6MjA3NTk1MTYwOH0.Wg6rp7o2Rwkt6Y8038X9-9KvoNMoQD_oKntg5MByczo';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        async function searchByPackageId() {
+  // 1️⃣ Read input value
+  const pkgIdInput = document.getElementById("searchPackageId");
+  const pkgId = pkgIdInput.value.trim();
+
+  // 2️⃣ Validate input
+  if (!pkgId) {
+    alert("Please enter a Package ID");
+    return;
+  }
+
+  // 3️⃣ Query Supabase
+  const { data, error } = await supabase
+    .from("newirdata")
+    .select("payload")
+    .eq("package_id", pkgId)
+    .single();
+
+  // 4️⃣ Handle not found / error
+  if (error || !data) {
+    alert("No JSON found for Package ID: " + pkgId);
+    return;
+  }
+
+  // 5️⃣ Load JSON into editor (Step 2C)
+  loadJsonForEditing(data.payload);
+}
+          function loadJsonForEditing(payload) {
+  const formContainer = document.getElementById("formContainer");
+
+  // 1️⃣ Clear existing UI (welcome / previous data)
+  formContainer.innerHTML = "";
+
+  // 2️⃣ Mark editor mode (important for later update step)
+  formContainer.dataset.active = "edit";
+
+  // 3️⃣ Extract the actual asset object
+  const dataObj = payload.data[0];
+
+  // 4️⃣ Create top-level navigation row (same as loadCategory)
+  const topFieldsRow = document.createElement("div");
+  topFieldsRow.className = "top-fields-row";
+
+  Object.keys(dataObj).forEach(key => {
+    const topCard = document.createElement("div");
+    topCard.className = "card top-level";
+    topCard.textContent = key;
+
+    topCard.onclick = () => {
+
+      // Remove previous detail cards
+      Array.from(formContainer.querySelectorAll(".detail-card"))
+        .forEach(e => e.remove());
+
+      // Remove active highlight
+      Array.from(formContainer.querySelectorAll(".card.top-level"))
+        .forEach(e => e.classList.remove("active"));
+
+      topCard.classList.add("active");
+
+      // Create detail editor card
+      const detailCard = document.createElement("div");
+      detailCard.className = "card detail-card";
+
+      // 🔥 USE YOUR EXISTING EDITOR
+      buildForm(dataObj[key], detailCard, key, true);
+
+      formContainer.appendChild(detailCard);
+    };
+
+    topFieldsRow.appendChild(topCard);
+  });
+
+  // 5️⃣ Render top-level cards
+  formContainer.appendChild(topFieldsRow);
+}
+
     const sampleData = {
  movie: {
     "hits": "1",
