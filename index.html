@@ -3194,86 +3194,54 @@ function loadCategory(cat) {
 }
 
 
-
 async function downloadJSON() {
+
+  if (!currentPayload) {
+    alert("No JSON loaded. Please select a category or search a Package ID first.");
+    return;
+  }
+
   const formContainer = document.getElementById("formContainer");
   const mode = formContainer.dataset.active;
 
-  let payloadToSave;
-
-  // 1️⃣ Decide source JSON
-  if (mode === "edit") {
-    if (!currentPackageId || !currentPayload) {
-      alert("Edit mode error: No package loaded");
-      return;
-    }
-    payloadToSave = currentPayload;
-  } else {
-    const cat = mode || "movie";
-    payloadToSave = sampleData[cat];
-  }
-
-  const jsonStr = JSON.stringify(payloadToSave, null, 2);
+  const payloadToSave = currentPayload;
 
   try {
     let response;
 
-    // 2️⃣ EDIT MODE → UPDATE (OVERRIDE)
-    if (mode === "edit") {
-      console.log("Overwriting JSON for package_id:", currentPackageId);
-
+    if (mode === "edit" && currentPackageId) {
       response = await supabase
         .from("newirdata")
-        .update({
-          payload: payloadToSave,
-          updated_at: new Date().toISOString()
-        })
+        .update({ payload: payloadToSave })
         .eq("package_id", currentPackageId);
-    }
-
-    // 3️⃣ CREATE MODE → INSERT
-    else {
-      console.log("Creating new JSON");
-
+    } else {
       response = await supabase
         .from("newirdata")
         .insert([{ payload: payloadToSave }]);
     }
 
-    // 4️⃣ Handle DB errors
     if (response.error) {
-      if (response.error.code === "23505") {
-        alert(
-          "A JSON with this Package ID already exists.\n\n" +
-          "Please SEARCH and EDIT the existing JSON instead."
-        );
-      } else {
-        alert("Database error: " + response.error.message);
-      }
+      alert("Database error: " + response.error.message);
       return;
     }
 
-    // 5️⃣ Download JSON locally
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+    const blob = new Blob(
+      [JSON.stringify(payloadToSave, null, 2)],
+      { type: "application/json" }
+    );
 
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `${currentPackageId || "vod_asset"}.json`;
+    a.href = URL.createObjectURL(blob);
+    a.download = currentPackageId
+      ? `${currentPackageId}.json`
+      : "vod_asset.json";
     a.click();
-
-    URL.revokeObjectURL(url);
-
-    alert(
-      mode === "edit"
-        ? "JSON updated in backend and downloaded successfully"
-        : "JSON created and downloaded successfully"
-    );
 
   } catch (err) {
     alert("Unexpected error: " + err.message);
   }
 }
+
 
   
   </script>
