@@ -3144,20 +3144,20 @@ function buildForm(obj, container, parentKey = "", isRoot = false) {
 
 
 function loadCategory(cat) {
+currentPackageId = null;
+currentPayload = null;
 
-  // reset edit state
-  currentPackageId = null;
-
+  
   const formContainer = document.getElementById("formContainer");
   formContainer.innerHTML = "";
-  formContainer.dataset.active = "create";
+  formContainer.dataset.active = cat;
+   
+  currentPayload = sampleData[cat];
 
+  
   if (!sampleData[cat]) return;
 
-  // 🔥 CRITICAL FIX
-  currentPayload = structuredClone(sampleData[cat]);
-
-  const dataObj = currentPayload.data[0];
+  const dataObj = sampleData[cat].data[0];
 
   const topFieldsRow = document.createElement("div");
   topFieldsRow.className = "top-fields-row";
@@ -3168,15 +3168,11 @@ function loadCategory(cat) {
     topCard.textContent = key;
 
     topCard.onclick = () => {
-      document
-        .querySelectorAll(".detail-card")
-        .forEach(e => e.remove());
 
-      document
-        .querySelectorAll(".card.top-level")
-        .forEach(e => e.classList.remove("active"));
+      Array.from(formContainer.querySelectorAll('.detail-card')).forEach(e => e.remove());
+      Array.from(formContainer.querySelectorAll('.card.top-level')).forEach(e => e.classList.remove('active'));
 
-      topCard.classList.add("active");
+      topCard.classList.add('active');
 
       const detailCard = document.createElement("div");
       detailCard.className = "card detail-card";
@@ -3192,55 +3188,85 @@ function loadCategory(cat) {
 }
 
 
-
 async function downloadJSON() {
-
-  if (!currentPayload || typeof currentPayload !== "object") {
-    alert("No JSON loaded. Please select a category or search a Package ID first.");
-    return;
-  }
-
   const formContainer = document.getElementById("formContainer");
   const mode = formContainer.dataset.active;
 
-  const payloadToSave = currentPayload;
+  let payloadToSave;
+
+  // 1️⃣ Decide source JSON
+  if (mode === "edit") {
+    if (!currentPackageId || !currentPayload) {
+      alert("Edit mode error: No package loaded");
+      return;
+    }
+    payloadToSave = currentPayload;
+  } else {
+    const cat = mode || "movie";
+    payloadToSave = sampleData[cat];
+  }
+
+  const jsonStr = JSON.stringify(payloadToSave, null, 2);
 
   try {
     let response;
 
-    if (mode === "edit" && currentPackageId) {
+    // 2️⃣ EDIT MODE → UPDATE (OVERRIDE)
+    if (mode === "edit") {
+      console.log("Overwriting JSON for package_id:", currentPackageId);
+
       response = await supabase
         .from("newirdata")
-        .update({ payload: payloadToSave })
+        .update({
+          payload: payloadToSave,
+          updated_at: new Date().toISOString()
+        })
         .eq("package_id", currentPackageId);
-    } else {
+    }
+
+    // 3️⃣ CREATE MODE → INSERT
+    else {
+      console.log("Creating new JSON");
+
       response = await supabase
         .from("newirdata")
         .insert([{ payload: payloadToSave }]);
     }
 
+    // 4️⃣ Handle DB errors
     if (response.error) {
-      alert("Database error: " + response.error.message);
+      if (response.error.code === "23505") {
+        alert(
+          "A JSON with this Package ID already exists.\n\n" +
+          "Please SEARCH and EDIT the existing JSON instead."
+        );
+      } else {
+        alert("Database error: " + response.error.message);
+      }
       return;
     }
 
-    const blob = new Blob(
-      [JSON.stringify(payloadToSave, null, 2)],
-      { type: "application/json" }
-    );
+    // 5️⃣ Download JSON locally
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = currentPackageId
-      ? `${currentPackageId}.json`
-      : "vod_asset.json";
+    a.href = url;
+    a.download = `${currentPackageId || "vod_asset"}.json`;
     a.click();
+
+    URL.revokeObjectURL(url);
+
+    alert(
+      mode === "edit"
+        ? "JSON updated in backend and downloaded successfully"
+        : "JSON created and downloaded successfully"
+    );
 
   } catch (err) {
     alert("Unexpected error: " + err.message);
   }
 }
-
 
   
   </script>
