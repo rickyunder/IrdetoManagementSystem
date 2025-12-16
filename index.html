@@ -3144,10 +3144,17 @@ function buildForm(obj, container, parentKey = "", isRoot = false) {
 
 
 function loadCategory(cat) {
+currentPackageId = null;
+currentPayload = null;
+
+  
   const formContainer = document.getElementById("formContainer");
   formContainer.innerHTML = "";
   formContainer.dataset.active = cat;
+   
+  currentPayload = sampleData[cat];
 
+  
   if (!sampleData[cat]) return;
 
   const dataObj = sampleData[cat].data[0];
