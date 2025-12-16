@@ -3145,21 +3145,18 @@ function buildForm(obj, container, parentKey = "", isRoot = false) {
 
 function loadCategory(cat) {
 
-  // 🔒 Reset global state
+  // reset edit state
   currentPackageId = null;
-  currentPayload = null;
 
   const formContainer = document.getElementById("formContainer");
   formContainer.innerHTML = "";
-
-  // 🔒 Explicit create mode
   formContainer.dataset.active = "create";
 
-  // 🔒 Single source of truth
   if (!sampleData[cat]) return;
-  currentPayload = sampleData[cat];
 
-  // 🔒 ALWAYS render from currentPayload
+  // 🔥 CRITICAL FIX
+  currentPayload = structuredClone(sampleData[cat]);
+
   const dataObj = currentPayload.data[0];
 
   const topFieldsRow = document.createElement("div");
@@ -3171,9 +3168,12 @@ function loadCategory(cat) {
     topCard.textContent = key;
 
     topCard.onclick = () => {
-      Array.from(formContainer.querySelectorAll(".detail-card"))
+      document
+        .querySelectorAll(".detail-card")
         .forEach(e => e.remove());
-      Array.from(formContainer.querySelectorAll(".card.top-level"))
+
+      document
+        .querySelectorAll(".card.top-level")
         .forEach(e => e.classList.remove("active"));
 
       topCard.classList.add("active");
@@ -3181,9 +3181,7 @@ function loadCategory(cat) {
       const detailCard = document.createElement("div");
       detailCard.className = "card detail-card";
 
-      // 🔥 EDITS MUTATE currentPayload DIRECTLY
       buildForm(dataObj[key], detailCard, key, true);
-
       formContainer.appendChild(detailCard);
     };
 
@@ -3194,9 +3192,10 @@ function loadCategory(cat) {
 }
 
 
+
 async function downloadJSON() {
 
-  if (!currentPayload) {
+  if (!currentPayload || typeof currentPayload !== "object") {
     alert("No JSON loaded. Please select a category or search a Package ID first.");
     return;
   }
