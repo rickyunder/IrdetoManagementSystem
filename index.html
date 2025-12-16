@@ -3144,20 +3144,23 @@ function buildForm(obj, container, parentKey = "", isRoot = false) {
 
 
 function loadCategory(cat) {
-currentPackageId = null;
-currentPayload = null;
 
-  
+  // 🔒 Reset global state
+  currentPackageId = null;
+  currentPayload = null;
+
   const formContainer = document.getElementById("formContainer");
   formContainer.innerHTML = "";
-  formContainer.dataset.active = cat;
-   
+
+  // 🔒 Explicit create mode
+  formContainer.dataset.active = "create";
+
+  // 🔒 Single source of truth
+  if (!sampleData[cat]) return;
   currentPayload = sampleData[cat];
 
-  
-  if (!sampleData[cat]) return;
-
-  const dataObj = sampleData[cat].data[0];
+  // 🔒 ALWAYS render from currentPayload
+  const dataObj = currentPayload.data[0];
 
   const topFieldsRow = document.createElement("div");
   topFieldsRow.className = "top-fields-row";
@@ -3168,16 +3171,19 @@ currentPayload = null;
     topCard.textContent = key;
 
     topCard.onclick = () => {
+      Array.from(formContainer.querySelectorAll(".detail-card"))
+        .forEach(e => e.remove());
+      Array.from(formContainer.querySelectorAll(".card.top-level"))
+        .forEach(e => e.classList.remove("active"));
 
-      Array.from(formContainer.querySelectorAll('.detail-card')).forEach(e => e.remove());
-      Array.from(formContainer.querySelectorAll('.card.top-level')).forEach(e => e.classList.remove('active'));
-
-      topCard.classList.add('active');
+      topCard.classList.add("active");
 
       const detailCard = document.createElement("div");
       detailCard.className = "card detail-card";
 
+      // 🔥 EDITS MUTATE currentPayload DIRECTLY
       buildForm(dataObj[key], detailCard, key, true);
+
       formContainer.appendChild(detailCard);
     };
 
@@ -3186,6 +3192,7 @@ currentPayload = null;
 
   formContainer.appendChild(topFieldsRow);
 }
+
 
 
 async function downloadJSON() {
