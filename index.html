@@ -255,6 +255,8 @@
                 <li onclick="loadCategory('season')">Season</li>
                 <li onclick="loadCategory('boxset')">Boxset</li>
                 <li onclick="loadCategory('trailers')">Trailers</li>
+                <li onclick="loadEPGFetcher()">EPG Fetcher</li>
+
             </ul>
 
             <input
@@ -3186,6 +3188,90 @@ currentPayload = null;
 
   formContainer.appendChild(topFieldsRow);
 }
+      
+function loadEPGFetcher() {
+  const formContainer = document.getElementById("formContainer");
+  formContainer.dataset.active = "epg";
+
+  formContainer.innerHTML = `
+    <div class="card">
+      <h3>EPG Fetcher</h3>
+
+      <label>Channel ID</label>
+      <input type="number" id="epgChannelId" value="161">
+
+      <label>Start Date</label>
+      <input type="date" id="epgStartDate">
+
+      <label>End Date</label>
+      <input type="date" id="epgEndDate" disabled>
+
+      <button class="small" style="margin-top:12px" onclick="fetchEPG()">
+        Fetch & Download EPG
+      </button>
+    </div>
+  `;
+
+  // Auto-calculate end date
+  document.getElementById("epgStartDate").addEventListener("change", () => {
+    const start = document.getElementById("epgStartDate").value;
+    if (!start) return;
+
+    const dt = new Date(start);
+    dt.setDate(dt.getDate() + 1);
+    document.getElementById("epgEndDate").value =
+      dt.toISOString().split("T")[0];
+  });
+}
+
+
+async function fetchEPG() {
+  const channelId = document.getElementById("epgChannelId").value;
+  const startDate = document.getElementById("epgStartDate").value;
+  const endDate = document.getElementById("epgEndDate").value;
+
+  if (!channelId || !startDate || !endDate) {
+    alert("Please select start date and channel");
+    return;
+  }
+
+  // Convert to required UTC window
+  const startUTC = `${startDate}T06:00:00Z`;
+  const endUTC   = `${endDate}T05:59:59Z`;
+
+  const body = {
+    channelId: Number(channelId),
+    start: startUTC,
+    end: endUTC,
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    const response = await fetch("http://172.28.1.180:8000", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `epg_${channelId}_${startDate}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+  } catch (err) {
+    alert("EPG Fetch failed: " + err.message);
+  }
+}
+
+
 
 
 async function downloadJSON() {
