@@ -241,11 +241,95 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
+
+<!-- JSON VIEW MODAL -->
+<div id="jsonModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+">
+  <div style="
+    background:#fff;
+    width:90%;
+    max-width:900px;
+    max-height:85vh;
+    border-radius:10px;
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+  ">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>Payload JSON</h3>
+      <button class="small" onclick="closeJsonModal()">Close</button>
+    </div>
+
+    <pre id="jsonModalContent" style="
+      margin-top:12px;
+      background:#f6f6f6;
+      padding:12px;
+      overflow:auto;
+      flex:1;
+      font-size:13px;
+    "></pre>
+  </div>
+</div>
+
+
+<div id="payloadViewer" style="
+  position:fixed;
+  top:0;
+  right:-45%;
+  width:45%;
+  height:100%;
+  background:white;
+  box-shadow:-4px 0 12px rgba(0,0,0,0.2);
+  z-index:9999;
+  transition: right 0.3s ease;
+  display:flex;
+  flex-direction:column;
+">
+  <div style="
+    padding:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid #ddd;
+  ">
+    <strong>Payload JSON</strong>
+    <div>
+      <button class="small" onclick="downloadViewedPayload()">Download</button>
+      <button class="small" onclick="closePayloadView()">Close</button>
+    </div>
+  </div>
+
+  <pre id="payloadViewerContent" style="
+    flex:1;
+    overflow:auto;
+    padding:12px;
+    font-size:13px;
+    background:#f6f6f6;
+  "></pre>
+</div>
+
+
+
 <body>
-  <header>
-    Irdeto Management System
+  <header style="display:flex; align-items:center; justify-content: space-between;">
+  <div style="display:flex; gap:20px; align-items:center;">
+    <span>Irdeto Management System</span>
+  </div>
+
+  <div style="display:flex; gap:20px; align-items:center;">
+    <button class="small" onclick="loadListView()">List</button>
     <img src="logo.9b855fd95b676e72.svg" alt="IRDETO Logo">
-  </header>
+  </div>
+</header>
+
+
     <div class="main">
     <div class="sidebar">
             <ul>
@@ -256,22 +340,9 @@
                 <li onclick="loadCategory('boxset')">Boxset</li>
                 <li onclick="loadCategory('trailers')">Trailers</li>
                 <li onclick="loadEPGFetcher()">EPG Fetcher</li>
-
             </ul>
 
-            <input
-  type="text"
-  id="searchPackageId"
-  placeholder="Enter Package ID"
-  style="margin:10px; padding:8px; border-radius:6px; border:1px solid #ccc"
-/>
-
-<button
-  style="margin:10px"
-  onclick="searchByPackageId()"
->
-  Search & Edit
-</button>
+     
 
       <button onclick="downloadJSON()">Download JSON</button>
     </div>
@@ -283,9 +354,9 @@
       </div>
     </div>
   </div>
-
-    <script>
-        
+      
+    <script>   
+        const payloadCache = new Map(); 
         const SUPABASE_URL = 'https://hozwvtsitrzozejaapdv.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhvend2dHNpdHJ6b3plamFhcGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAzNzU2MDgsImV4cCI6MjA3NTk1MTYwOH0.Wg6rp7o2Rwkt6Y8038X9-9KvoNMoQD_oKntg5MByczo';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -384,7 +455,7 @@
 }
 
     const sampleData = {
- movie: {
+movie: {
     "hits": "1",
     "responseCode": "200",
     "responseMessage": "Success",
@@ -2150,7 +2221,7 @@ series: {
         }
     ]
 },
-    boxset: {
+boxset: {
     "hits": "1",
     "responseCode": "200",
     "responseMessage": "Success",
@@ -2583,7 +2654,7 @@ series: {
         }
     ]
 },
-    trailers: {
+trailers: {
     "hits": "1",
     "responseCode": "200",
     "responseMessage": "Success",
@@ -3004,8 +3075,8 @@ series: {
     ]
 }
     };
-
-  function makeInputForType(value, onChange) {
+                                                                      
+function makeInputForType(value, onChange) {
   let input;
 
   if (typeof value === "number") {
@@ -3143,7 +3214,233 @@ function buildForm(obj, container, parentKey = "", isRoot = false) {
   }
 }
 
+async function loadListView() {
+  const formContainer = document.getElementById("formContainer");
+  formContainer.dataset.active = "list";
+  formContainer.innerHTML = `
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:end; gap:12px;">
+        
+        <h3 style="margin:0">Package List</h3>
 
+        <div style="display:flex; gap:8px;">
+          <input id="searchPkgId" placeholder="Search by Package ID">
+          <button class="small" onclick="searchByPackageId()">Search</button>
+        </div>
+
+      </div>
+
+      <div style="margin-top:12px; max-width:300px;">
+        <label>Filter by Package Type</label>
+        <select id="filterPackageType" onchange="filterByPackageType()">
+          <option value="">All</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <table id="packageTable" width="100%" cellpadding="8"></table>
+    </div>
+  `;
+
+  await populatePackageTypeFilter();
+  await fetchPackageList(); // initial load (all rows)
+}
+
+async function populatePackageTypeFilter() {
+  const { data, error } = await supabase
+    .from("newirdata")
+    .select("package_label");
+
+  if (error) return;
+
+  const unique = [...new Set(data.map(d => d.package_label))];
+  const select = document.getElementById("filterPackageType");
+
+  unique.forEach(val => {
+    if (!val) return;
+    const opt = document.createElement("option");
+    opt.value = val;
+    opt.textContent = val;
+    select.appendChild(opt);
+  });
+}
+
+async function fetchPackageList(filter = {}) {
+  let query = supabase
+    .from("newirdata")
+    .select(`
+      id,
+      package_id,
+      package_label,
+      offer_type_label,
+      prelogin,
+      payload,
+      created_at,
+      updated_at 
+    `)
+    .order("created_at", { ascending: false });
+
+  if (filter.packageType) {
+    query = query.eq("package_label", filter.packageType);
+  }
+
+  if (filter.packageId) {
+    query = query.eq("package_id", filter.packageId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  renderPackageTable(data);
+}
+
+async function searchByPackageId() {
+  const pkgId = document.getElementById("searchPkgId").value.trim();
+  if (!pkgId) {
+    alert("Enter Package ID");
+    return;
+  }
+
+  await fetchPackageList({ packageId: pkgId });
+}
+
+async function filterByPackageType() {
+  const type = document.getElementById("filterPackageType").value;
+  await fetchPackageList({ packageType: type });
+}
+
+function openJsonModal(payload) {
+  const modal = document.getElementById("jsonModal");
+  const content = document.getElementById("jsonModalContent");
+
+  content.textContent = JSON.stringify(payload, null, 2);
+  modal.style.display = "flex";
+}
+
+function closeJsonModal() {
+  document.getElementById("jsonModal").style.display = "none";
+}
+
+function renderPackageTable(rows) {
+  const table = document.getElementById("packageTable");
+
+  payloadCache.clear(); // reset cache
+
+  table.innerHTML = `
+    <tr style="background:#f4f4f5">
+      <th>Package ID</th>
+      <th>Package Label</th>
+      <th>Offer Type</th>
+      <th>Prelogin</th>
+      <th>Created At</th>
+      <th>Updated At</th>
+      <th>Payload</th>
+      <th>Edit</th>
+    </tr>
+  `;
+
+  rows.forEach(row => {
+    payloadCache.set(row.id, row.payload); // cache payload
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${row.package_id}</td>
+      <td>${row.package_label}</td>
+      <td>${row.offer_type_label ?? "-"}</td>
+      <td>${row.prelogin}</td>
+      <td>${new Date(row.created_at).toLocaleString()}</td>
+      <td>${row.updated_at ? new Date(row.updated_at).toLocaleString() : "-"}</td>
+
+
+      <td>
+        <button class="small" onclick="openPayloadView('${row.id}')">
+          View
+        </button>
+      </td>
+
+      <td>
+        <button class="small" onclick="editFromList('${row.package_id}')">
+          Edit
+        </button>
+      </td>
+    `;
+
+    table.appendChild(tr);
+  });
+}
+
+function viewPayload(payload) {
+  const formContainer = document.getElementById("formContainer");
+  formContainer.innerHTML = `
+    <div class="card">
+      <pre style="max-height:600px; overflow:auto;">
+${JSON.stringify(payload, null, 2)}
+      </pre>
+    </div>
+  `;
+}
+
+let activeViewedPayload = null;
+
+function openPayloadView(rowId) {
+  const payload = payloadCache.get(rowId);
+
+  if (!payload) {
+    alert("Payload not found");
+    return;
+  }
+
+  activeViewedPayload = payload;
+
+  document.getElementById("payloadViewerContent").textContent =
+    JSON.stringify(payload, null, 2);
+
+  document.getElementById("payloadViewer").style.right = "0";
+}
+
+function closePayloadView() {
+  document.getElementById("payloadViewer").style.right = "-45%";
+  activeViewedPayload = null;
+}
+
+function downloadViewedPayload() {
+  if (!activeViewedPayload) return;
+
+  const jsonStr = JSON.stringify(activeViewedPayload, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "payload.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+async function editFromList(packageId) {
+  const { data, error } = await supabase
+    .from("newirdata")
+    .select("payload")
+    .eq("package_id", packageId)
+    .single();
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  currentPackageId = packageId;
+  currentPayload = data.payload;
+
+  loadJsonForEditing(data.payload);
+}
 
 function loadCategory(cat) {
 currentPackageId = null;
@@ -3188,7 +3485,7 @@ currentPayload = null;
 
   formContainer.appendChild(topFieldsRow);
 }
-      
+
 function loadEPGFetcher() {
   const formContainer = document.getElementById("formContainer");
   formContainer.dataset.active = "epg";
@@ -3354,7 +3651,6 @@ async function downloadJSON() {
   }
 }
 
-  
-  </script>
-</body>
-</html>
+</script>
+</body>  
+</html>  
